@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mirror",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-30",
+  "observability": {"enabled": false},
+  "d1_databases": [{"binding": "DB", "database_name": "mirror-vault", "database_id": "REPLACE_WITH_YOUR_D1_ID", "migrations_dir": "migrations"}]
+}

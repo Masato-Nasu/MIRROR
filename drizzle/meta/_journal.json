@@ -1,0 +1,1 @@
+{"version": "7", "dialect": "sqlite", "entries": [{"idx": 0, "version": "6", "when": 1793448000000, "tag": "0000_vaults", "breakpoints": true}, {"idx": 1, "version": "6", "when": 1793491200000, "tag": "0001_public_beta_limits", "breakpoints": true}]}

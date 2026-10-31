@@ -1,0 +1,13 @@
+import {readFileSync,writeFileSync,mkdirSync,rmSync,cpSync} from 'node:fs';
+import {stripTypeScriptTypes} from 'node:module';
+const read=p=>readFileSync(p,'utf8');
+const strip=p=>stripTypeScriptTypes(read(p),{mode:'transform',disableWarning:true}).replace(/^import .*?from ['"].*?['"];?\n/gm,'');
+mkdirSync('worker',{recursive:true});
+const assets={'/':{body:read('public/index.html'),type:'text/html; charset=utf-8'},'/style.css':{body:read('public/style.css'),type:'text/css; charset=utf-8'},'/app.js':{body:strip('src/app.ts'),type:'text/javascript; charset=utf-8'}};
+writeFileSync('public/app.js',assets['/app.js'].body);
+const source=strip('src/core.ts')+'\n'+strip('src/provider.ts')+'\n'+strip('src/worker.ts');
+const start=source.indexOf('function serveAsset(');
+const worker=source.slice(0,start).replace(/export (?!default)/g,'')+`const assets=${JSON.stringify(assets)};\nfunction serveAsset(request,env){const url=new URL(request.url);if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405,headers});const path=url.pathname==='/index.html'?'/':url.pathname;const asset=assets[path];if(!asset)return new Response('Not found',{status:404,headers});return new Response(request.method==='HEAD'?null:asset.body,{headers:{...headers,'Content-Type':asset.type,'Cache-Control':path==='/'?'no-cache':'public, max-age=300'}});}\n`;
+writeFileSync('worker/index.js',worker);
+rmSync('dist',{recursive:true,force:true});mkdirSync('dist/server',{recursive:true});mkdirSync('dist/.openai',{recursive:true});writeFileSync('dist/server/index.js',worker);cpSync('.openai/hosting.json','dist/.openai/hosting.json');
+console.log('Built TypeScript frontend and Worker; assets embedded for Sites, public/ for Pages.');

@@ -1,0 +1,5 @@
+CREATE TABLE abuse_buckets (
+  id TEXT PRIMARY KEY NOT NULL,
+  window INTEGER NOT NULL,
+  hits INTEGER NOT NULL
+);
