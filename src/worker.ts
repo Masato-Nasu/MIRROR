@@ -1,4 +1,5 @@
 import {run,validateInput} from './core.ts';
+import {loadPages,pageLinks} from './urls.ts';
 import {OpenAIProvider} from './provider.ts';
 interface Statement{bind(...values:unknown[]):Statement;first<T>():Promise<T|null>;run():Promise<unknown>}
 interface DB{prepare(sql:string):Statement}
@@ -13,7 +14,14 @@ export async function api(request:Request,env:Env):Promise<Response|null>{
   if(url.pathname==='/api/run'&&request.method==='POST'){
    const auth=request.headers.get('Authorization')??'';if(!/^Bearer [\x21-\x7E]{15,300}$/.test(auth))return json({error:'設定でOpenAI APIキーを入力してください。'},401);
    const raw=await limitedBody(request,6500000);const input=validateInput(JSON.parse(raw));if(raw.length>180000&&!(input.images?.length||input.history.some(h=>h.images?.length)))throw Error('BODY_TOO_LARGE');
-   const result=await run(input,new OpenAIProvider(auth.slice(7),request.signal));return json(result);
+   if(pageLinks(input.question).length){
+    if(!env.DB)return json({error:'URL取得の保護設定が未設定です。本文を貼り付けてください。'},503);
+    const slot=parseInt((await digest(request.headers.get('CF-Connecting-IP')??'local')).slice(0,8),16)%4096;
+    const minute=Math.floor(Date.now()/60000),day=Math.floor(Date.now()/86400000);
+    if(!await takeBudget(env.DB,'url-global-minute',minute,60)||!await takeBudget(env.DB,`url-ip-minute-${slot}`,minute,10)||!await takeBudget(env.DB,'url-global-day',day,500)||!await takeBudget(env.DB,`url-ip-day-${slot}`,day,100))return json({error:'URL取得の利用上限に達しました。時間を置くか、本文を貼り付けてください。'},429);
+   }
+   const sources=await loadPages(input.question,request.signal,url.origin);
+   const result=await run({...input,sources},new OpenAIProvider(auth.slice(7),request.signal));return json(result);
   }
   if(url.pathname==='/api/vault'&&['PUT','POST','DELETE'].includes(request.method)){
    if(!env.DB)return json({error:'D1保管庫が未設定です。端末保存とJSON書き出しを利用できます。'},503);

@@ -64,3 +64,7 @@ Provider.generateの第5引数にImageAttachment配列を渡す。JSON本文に�
 ## REFLECT feedback / v0.3.2
 
 The frontend projects up to six prior non-demo observations in the current conversation to bounded question/framing/reason/fallibility/revised records. No new persistence store or database table is introduced. REFLECT cognition receives these records plus up to ten bounded hypotheses; its reconsideration receives the same context. NORMAL and OBSERVE cognition receive neither. Deleting hypotheses removes them on the next request; existing observation comments remain part of the current conversation until a new conversation starts. Zero-finding observations can still inform cognition through their reason/framing, without automatically causing another API call. The provider does not train or fine-tune a model.
+
+## URL context / v0.3.3
+
+`src/urls.ts` extracts a bounded set of current-question URLs, validates public HTTPS targets and DNS, handles redirects manually, parses bounded HTML via HTMLRewriter and returns typed success/failure records. `/api/run` enforces D1 budgets before fetching and overwrites any caller-provided current-source field. Cognition, observer and reconsideration share the same fetched records. The frontend displays provenance and carries at most three prior source records in history. Those historic records are user-controlled untrusted data, not an attestation of a new network fetch. No account credential is forwarded and no page JavaScript is executed.

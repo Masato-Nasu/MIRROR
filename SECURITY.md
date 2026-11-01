@@ -10,7 +10,7 @@
 - 保管庫は256bit復元コードに基づくcapability。コードを失うと復元もAPIによる削除も不可。サイト管理者はD1全体を管理できる。
 - β公開の保管庫は256bit復元コードによる認証を維持する。新規作成にアカウント登録は不要。アクセスは全体600回/分・接続元60回/分、保存は全体120回/分・接続元10回/分、新規作成は全体100件/日・接続元5件/日。復元コードを失くした保管庫は管理者以外削除できない。
 - 保存総数500件・暗号文合計100MiB・1件約1MB。上限判定と保存は単一SQLで直列化し、既存の保存を勝手に削除しない。上限時も端末保存・JSON書き出しは利用できる。
-- 接続元はCloudflare付与のIPから固定4096スロットにハッシュ化。生IP・APIキーはD1へ保存しない。利用回数の表も最大12291行で一定。スロット衝突や共有回線では上限を共有する場合がある。分散攻撃やホスティング費用を完全に防ぐ保証ではない。
+- 接続元はCloudflare付与のIPから固定4096スロットにハッシュ化。生IP・APIキーはD1へ保存しない。保管庫とURL取得の利用回数の表は合わせて最大20485行で一定。スロット衝突や共有回線では上限を共有する場合がある。分散攻撃やホスティング費用を完全に防ぐ保証ではない。
 - 端末や配信ソースにXSS/改ざんがあれば、メモリ内キーや復号後の内容を保護できない。TLSや暗号化だけで対処できるものではない。
 - 停止ボタンはブラウザの待機とfetchを中断する。上流処理や課金の取消しは保証しない。前段の回答を受け取る前の中断は保存されない。
 - 仮説を消しても対話中の観察表示は残る。対話全体を消すには端末データ削除。D1保管庫は別途削除。
@@ -23,3 +23,10 @@
 - オフラインHTMLはサーバーからの公開シェルそのもの。DOM・メモリ内APIキー・入力・画像・会話のスナップショットは保存しない。既存のオプトイン端末保存の仕様は同じ。
 - Cache Storageの名前はMIRROR専用。新しいバージョンの有効化時にMIRRORの古いアセットキャッシュだけ削除する。実行中の対話を強制再読み込みしない。
 - PWAのインストールでAPIキーの保存許可は付与されない。AI処理とD1アクセスはオンライン専用。
+
+## URL reader / v0.3.3
+
+- Fetch only the first 3 unique URLs explicitly in the current question. Upgrade HTTP to HTTPS, standard port 443 only, no credentials/IP literals/local names/own origin. Manually validate each redirect (up to 3) and query Cloudflare public DNS A/AAAA, rejecting non-public address results; no private-network/VPC bindings are used. DNS prechecks and the platform's public egress are defense in depth, not a claim of DNS pinning; rebinding between DNS checks and fetch cannot be ruled out by prechecks alone.
+- Never forward the user's OpenAI key, request headers or cookies to DNS/page origins. Page requests use fixed headers, no credentials and no redirect auto-follow. 12-second per-page timeout and 1MB response bound. Parse HTML with platform HTMLRewriter, skip executable/navigation/form text, never execute scripts or fetch nested assets/links. Return at most 12,000 characters per page.
+- URL requests require D1 budgets: global 60/minute and 500/day, per hashed source slot 10/minute and 100/day. Together with vault limits, budget metadata has at most 20,485 fixed rows. No arbitrary proxy or standalone fetch endpoint.
+- Page text and metadata are untrusted model reference data. Explicitly identify failed/truncated sources and prohibit claims of reading failed URLs. Stored page extracts follow the existing optional conversation persistence and encrypted vault policy; no separate page database or service-worker cache. User-supplied signed URLs may expose their query to the named origin and model; public pages are the intended input.

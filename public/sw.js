@@ -1,7 +1,7 @@
 // No credentials, API requests, user content or arbitrary URLs enter this cache.
 const CACHE_PREFIX = 'mirror-shell-';
-const CACHE = CACHE_PREFIX + '0.3.2';
-const SHELL = ['/', '/style.css?v=0.3.2', '/app.js?v=0.3.2', '/manifest.webmanifest',
+const CACHE = CACHE_PREFIX + '0.3.3';
+const SHELL = ['/', '/style.css?v=0.3.3', '/app.js?v=0.3.3', '/manifest.webmanifest',
  '/icons/icon-192.png', '/icons/icon-512.png', '/icons/maskable-512.png', '/icons/apple-touch-icon.png'];
 const ALLOWED = new Set(SHELL);
 self.addEventListener('install', event => {
