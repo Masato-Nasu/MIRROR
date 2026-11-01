@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "MIRROR — Metacognitive AI",
+  "short_name": "MIRROR",
+  "description": "AIにもう一つの認知階層を与える、BYOKの実験的チャットアプリ。",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f6f0",
+  "theme_color": "#f5f6f0",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

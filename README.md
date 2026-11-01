@@ -24,6 +24,12 @@
 - 任意の端末保存、平文JSON書き出し、任意のAES-GCM暗号化D1保管庫。
 - APIキーなしの固定動作例（実験結果ではない）。
 
+## PWAとして使う
+
+公開URLをChrome / Edge / Safariで開き、ブラウザの「インストール」または「ホーム画面に追加」を使用します。iPhone / iPadはSafariの共有メニューから「ホーム画面に追加」を選びます。インストール後も利用者自身のOpenAI APIキーが必要です。キーは再起動・再読み込みで消え、アプリ側では保存しません。
+
+画面・固定デモは初回オンライン起動後にオフラインでも開けます。AIとの通信とD1保管庫にはインターネット接続が必要です。Service Workerが保存するのは同一サイトの公開HTML・CSS・JavaScript・アイコンのみで、API・Authorization付き通信・会話・添付画像はキャッシュしません。
+
 ## 起動
 
 Node.js 24.10以降とnpmが必要です。TypeScriptの変換にNodeの `stripTypeScriptTypes` を使用します。

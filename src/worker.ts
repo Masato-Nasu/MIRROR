@@ -3,7 +3,7 @@ import {OpenAIProvider} from './provider.ts';
 interface Statement{bind(...values:unknown[]):Statement;first<T>():Promise<T|null>;run():Promise<unknown>}
 interface DB{prepare(sql:string):Statement}
 interface Env{DB?:DB;ASSETS?:{fetch(request:Request):Promise<Response>}}
-const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",'Permissions-Policy':'camera=(), microphone=(), geolocation=()'};
+const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",'Permissions-Policy':'camera=(), microphone=(), geolocation=()'};
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...headers,'Content-Type':'application/json'}});
 export async function api(request:Request,env:Env):Promise<Response|null>{
  const url=new URL(request.url);if(!url.pathname.startsWith('/api/'))return null;

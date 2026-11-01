@@ -114,3 +114,14 @@ function updateQualityPreset(){const cognition=$<HTMLInputElement>('#cogModel').
 $('#qualityPreset').onchange=()=>{const p=qualityPresets[$<HTMLSelectElement>('#qualityPreset').value];if(!p){$('#qualityHint').textContent='役割ごとにモデルを指定してください。';return;}$<HTMLInputElement>('#cogModel').value=p.cognition;$<HTMLInputElement>('#metaModel').value=p.meta;$<HTMLSelectElement>('#reasoningEffort').value=p.effort;updateQualityPreset();};
 $('#cogModel').addEventListener('input',updateQualityPreset);$('#metaModel').addEventListener('input',updateQualityPreset);
 $<HTMLSelectElement>('#reasoningEffort').value=reasoningEffort;updateQualityPreset();updateQualityNotice();
+
+// PWA caches only public app-shell assets. Keys, conversations, images and API
+// responses are never sent to the service worker or written to Cache Storage.
+if ('serviceWorker' in navigator) {
+ window.addEventListener('load',()=>{
+  navigator.serviceWorker.register('/sw.js',{scope:'/',updateViaCache:'none'})
+   .then(()=>navigator.serviceWorker.ready)
+   .then(()=>{document.documentElement.dataset.pwaState='ready';})
+   .catch(()=>{document.documentElement.dataset.pwaState='unavailable';});
+ });
+}
