@@ -60,3 +60,7 @@ Cloudflare Pages + Pages Functions（Workers runtime）を通常のセルフホ�
 Provider.generateの第5引数にImageAttachment配列を渡す。JSON本文に画像base64を混ぜず、Responses APIのinput_imageパートとして渡す。テキストには1始まりのimageIndicesを示し、過去の質問と今回の画像を対応づける。同じ画像を初回回答、観察、再検討に供給する。画像が省略/消失した履歴にはその旨を明示し、見ていない画像を見たと扱わせない。
 
 画像データはブラウザメモリで直近6枚のみ保持。永続化用stateからimagesを除外し、ファイル名だけ残す。Workerの回答にも画像データをエコーしない。OpenAIは送信された画像を処理するため、その保持方針が適用される。画像内の文字も非信頼データとして役割指示に明記。
+
+## REFLECT feedback / v0.3.2
+
+The frontend projects up to six prior non-demo observations in the current conversation to bounded question/framing/reason/fallibility/revised records. No new persistence store or database table is introduced. REFLECT cognition receives these records plus up to ten bounded hypotheses; its reconsideration receives the same context. NORMAL and OBSERVE cognition receive neither. Deleting hypotheses removes them on the next request; existing observation comments remain part of the current conversation until a new conversation starts. Zero-finding observations can still inform cognition through their reason/framing, without automatically causing another API call. The provider does not train or fine-tune a model.

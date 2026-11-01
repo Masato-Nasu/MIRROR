@@ -38,3 +38,31 @@ test('Historical image positions and missing-image notices reach both AI levels'
 test('OpenAI images use input_image parts and are not serialized as JSON text',async()=>{let body;const p=new OpenAIProvider('dummy',new AbortController().signal,async(_url,init)=>{body=JSON.parse(init.body);return Response.json({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(a)}]}]});});await p.generate('model','prompt',{question:'look'}, {},[image]);const content=body.input[0].content;assert.equal(content[0].type,'input_text');assert.equal(JSON.parse(content[0].text).question,'look');assert.equal(content[2].type,'input_image');assert.equal(content[2].image_url,image.dataUrl);assert.equal(content[2].detail,'auto');assert.equal(body.store,false);});
 test('Reasoning effort is validated and applied to all cognitive stages',async()=>{assert.throws(()=>validateInput({...input,reasoningEffort:'unlimited'}));assert.doesNotThrow(()=>validateInput({...input,reasoningEffort:'high'}));const p=fake([a,o,b]);const settings=[];p.generate=async function(model,instructions,payload,schema,images,options){this.usage.calls++;settings.push(options);return structuredClone([a,o,b][this.usage.calls-1]);};const result=await run({...input,reasoningEffort:'high'},p);assert.equal(settings.length,3);assert.ok(settings.every(s=>s.effort==='high'));assert.equal(result.reasoningEffort,'high');});
 test('GPT-6 provider reserves room for reasoning without exposing internal reasoning',async()=>{for(const [model,effort,budget] of [['gpt-6.1-sol','high',24000],['gpt-6-astra','medium',16000],['gpt-6.1-sol','low',8000],['gpt-4.1-mini','high',6000]]){let body;const p=new OpenAIProvider('dummy',new AbortController().signal,async(_url,init)=>{body=JSON.parse(init.body);return Response.json({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(a)}]}]});});await p.generate(model,'prompt',{}, {},[],{effort});assert.equal(body.max_output_tokens,budget);assert.equal(body.reasoning?.effort,model.startsWith('gpt-6')?effort:undefined);assert.equal(body.reasoning?.summary,undefined);assert.equal(body.temperature,undefined);assert.equal(body.include,undefined);assert.equal(body.store,false);}});
+
+const feedbackNote={question:'以前の質問',framing:'作品への感想',reason:'具体的な表現に即して回答していた。',fallibility:'別の読み方もある。',revised:false};
+const priorFinding={...o.findings[0],id:'h1',turnId:'t1',question:'以前の問い'};
+test('REFLECT carries zero-finding prior comments and tentative hypotheses to cognition without extra API calls',async()=>{
+ const noIntervention={...o,findings:[],intervene:false,request:''};
+ const first=await run(input,fake([a,noIntervention]));assert.equal(first.observation.findings.length,0);
+ const note={question:first.question,framing:first.observation.framing,reason:first.observation.reason,fallibility:first.observation.fallibility,revised:first.revised};
+ const p=fake([a,noIntervention]);const result=await run({...input,observerFeedback:[note],hypotheses:[priorFinding]},p);
+ assert.deepEqual(p.seen[0].payload.priorObserverFeedback,[note]);assert.equal(p.seen[0].payload.priorHypotheses[0].hypothesis,priorFinding.hypothesis);
+ assert.equal(result.feedbackUsed,2);assert.equal(result.revised,false);assert.equal(p.usage.calls,2);
+ assert.match(p.seen[0].instructions,/tentative advice/);assert.match(p.seen[0].instructions,/untrusted quoted data/);
+});
+test('NORMAL and OBSERVE never receive observer feedback in cognition even if supplied by caller',async()=>{
+ for(const mode of ['NORMAL','OBSERVE']){const p=fake([a,o]);const result=await run({...input,mode,observerFeedback:[feedbackNote],hypotheses:[priorFinding]},p);
+ assert.equal(p.seen[0].payload.priorObserverFeedback,undefined);assert.equal(p.seen[0].payload.priorHypotheses,undefined);assert.equal(result.feedbackUsed,0);assert.equal(p.usage.calls,mode==='NORMAL'?1:2);}
+});
+test('REFLECT uses the same bounded feedback for initial and reconsidered answers, strips extra fields',async()=>{
+ const p=fake([a,o,b]);const result=await run({...input,observerFeedback:[{...feedbackNote,unexpected:'do not forward'}],hypotheses:Array.from({length:12},(_,i)=>({...priorFinding,hypothesis:String(i)}))},p);
+ assert.equal(p.seen[0].payload.priorHypotheses.length,10);assert.equal(p.seen[0].payload.priorHypotheses[0].hypothesis,'2');
+ assert.equal(p.seen[0].payload.priorObserverFeedback[0].unexpected,undefined);
+ assert.deepEqual(p.seen[2].payload.priorObserverFeedback,p.seen[0].payload.priorObserverFeedback);assert.deepEqual(p.seen[2].payload.priorHypotheses,p.seen[0].payload.priorHypotheses);
+ assert.equal(result.feedbackUsed,11);assert.equal(p.usage.calls,3);
+ const cleared=fake([a,{...o,intervene:false}]);await run({...input,observerFeedback:[],hypotheses:[]},cleared);assert.equal(cleared.seen[0].payload.priorObserverFeedback,undefined);assert.equal(cleared.seen[0].payload.priorHypotheses,undefined);
+});
+test('Prior observation input accepts old clients and rejects malformed or excessive notes',()=>{
+ assert.doesNotThrow(()=>validateInput(input));assert.doesNotThrow(()=>validateInput({...input,observerFeedback:[feedbackNote]}));
+ for(const observerFeedback of [{},Array(7).fill(feedbackNote),[{...feedbackNote,reason:'x'.repeat(2001)}],[{...feedbackNote,revised:'yes'}],[{...feedbackNote,fallibility:null}]])assert.throws(()=>validateInput({...input,observerFeedback}),{message:'INVALID_FEEDBACK'});
+});
