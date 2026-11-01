@@ -31,7 +31,7 @@ function harness(){
 }
 test('PWA never intercepts or caches API, Authorization, cross-origin, user query or unknown URLs',async()=>{
  const h=harness();await h.lifecycle('install');
- for(const req of [new Request(origin+'/api/run',{method:'POST',body:'secret'}),new Request(origin+'/api/health'),new Request(origin+'/api/vault'),new Request(origin+'/app.js?v=0.3.3',{headers:{Authorization:'Bearer dummy-secret'}}),new Request('https://external.test/app.js'),new Request(origin+'/?apiKey=dummy-secret'),new Request(origin+'/private')])assert.equal(await h.request(req),undefined);
+ for(const req of [new Request(origin+'/api/run',{method:'POST',body:'secret'}),new Request(origin+'/api/health'),new Request(origin+'/api/vault'),new Request(origin+'/app.js?v=0.3.4',{headers:{Authorization:'Bearer dummy-secret'}}),new Request('https://external.test/app.js'),new Request(origin+'/?apiKey=dummy-secret'),new Request(origin+'/private')])assert.equal(await h.request(req),undefined);
  assert.equal(h.network.length,0);
  for(const map of h.stores.values())for(const key of map.keys())assert.ok(!/api|secret|private/.test(key));
 });
@@ -39,8 +39,8 @@ test('PWA public shell works offline, and activation removes only old MIRROR she
  const h=harness();await h.lifecycle('install');
  h.stores.set('mirror-shell-0.2.0',new Map());h.stores.set('unrelated-data',new Map());
  await h.lifecycle('activate');assert.ok(!h.stores.has('mirror-shell-0.2.0'));assert.ok(h.stores.has('unrelated-data'));
- const online=await h.request(new Request(origin+'/app.js?v=0.3.3'));assert.equal(await online.text(),'public:/app.js?v=0.3.3');assert.equal(h.network[0].options.credentials,'omit');
+ const online=await h.request(new Request(origin+'/app.js?v=0.3.4'));assert.equal(await online.text(),'public:/app.js?v=0.3.4');assert.equal(h.network[0].options.credentials,'omit');
  h.setOffline();
  assert.equal(await (await h.request(new Request(origin+'/'))).text(),'public:/');
- assert.equal(await (await h.request(new Request(origin+'/app.js?v=0.3.3'))).text(),'public:/app.js?v=0.3.3');
+ assert.equal(await (await h.request(new Request(origin+'/app.js?v=0.3.4'))).text(),'public:/app.js?v=0.3.4');
 });

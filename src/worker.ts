@@ -1,5 +1,5 @@
 import {run,validateInput} from './core.ts';
-import {loadPages,pageLinks} from './urls.ts';
+import {loadPages,pageLinks,loadPageImages} from './urls.ts';
 import {OpenAIProvider} from './provider.ts';
 interface Statement{bind(...values:unknown[]):Statement;first<T>():Promise<T|null>;run():Promise<unknown>}
 interface DB{prepare(sql:string):Statement}
@@ -21,7 +21,9 @@ export async function api(request:Request,env:Env):Promise<Response|null>{
     if(!await takeBudget(env.DB,'url-global-minute',minute,60)||!await takeBudget(env.DB,`url-ip-minute-${slot}`,minute,10)||!await takeBudget(env.DB,'url-global-day',day,500)||!await takeBudget(env.DB,`url-ip-day-${slot}`,day,100))return json({error:'URL取得の利用上限に達しました。時間を置くか、本文を貼り付けてください。'},429);
    }
    const sources=await loadPages(input.question,request.signal,url.origin);
-   const result=await run({...input,sources},new OpenAIProvider(auth.slice(7),request.signal));return json(result);
+   const userImageCount=(input.images?.length??0)+input.history.reduce((n,h)=>n+(h.images?.length??0),0);
+   const sourceImages=await loadPageImages(sources,request.signal,url.origin,Math.min(3,6-userImageCount));
+   const result=await run({...input,sources,sourceImages},new OpenAIProvider(auth.slice(7),request.signal));return json(result);
   }
   if(url.pathname==='/api/vault'&&['PUT','POST','DELETE'].includes(request.method)){
    if(!env.DB)return json({error:'D1保管庫が未設定です。端末保存とJSON書き出しを利用できます。'},503);

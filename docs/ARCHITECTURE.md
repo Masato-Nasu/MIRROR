@@ -68,3 +68,7 @@ The frontend projects up to six prior non-demo observations in the current conve
 ## URL context / v0.3.3
 
 `src/urls.ts` extracts a bounded set of current-question URLs, validates public HTTPS targets and DNS, handles redirects manually, parses bounded HTML via HTMLRewriter and returns typed success/failure records. `/api/run` enforces D1 budgets before fetching and overwrites any caller-provided current-source field. Cognition, observer and reconsideration share the same fetched records. The frontend displays provenance and carries at most three prior source records in history. Those historic records are user-controlled untrusted data, not an attestation of a new network fetch. No account credential is forwarded and no page JavaScript is executed.
+
+## Dynamic page content / v0.3.4
+
+A narrow MASATO LAB Portfolio adapter reads the same public JSON used by the observed page, filters private entries and bounds every description while keeping the public work list. General HTML parsing also collects a bounded set of image candidates. Sampled images are fetched with the URL reader's safety controls, attached as actual model image inputs, and mapped to their source/title/index in sourceImageReferences. All cognitive stages share those inputs. Only source metadata survives in the response; image bytes are never persisted. The reader rejects framework-only shells it cannot populate.
